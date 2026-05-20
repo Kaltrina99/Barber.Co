@@ -1,0 +1,6 @@
+{
+  "name": "Barber Scheduler & Profile Manager",
+  "description": "A premium booking platform and landing page where barbers manage their professional profiles, list services, and schedule appointments.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

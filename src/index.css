@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cinzel", Georgia, serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* High fidelity Sophisticated Dark color mapping */
+  --color-amber-50: #FAF8F2;
+  --color-amber-100: #F4ECCF;
+  --color-amber-200: #EADCA3;
+  --color-amber-300: #DECA72;
+  --color-amber-400: #C5A059;
+  --color-amber-500: #C5A059;
+  --color-amber-600: #B48E47;
+  --color-amber-700: #9F7E3E;
+  --color-amber-800: #7F6432;
+  --color-amber-900: #5F4B25;
+  --color-amber-950: #302613;
+
+  /* Map standard slate to off-black modern shades */
+  --color-slate-900: #0d0d0d;
+  --color-slate-950: #050505;
+}
+
+/* Custom styles for luxury background gradients and transitions */
+::selection {
+  background-color: #C5A059;
+  color: #050505;
+}
+
+/* Custom scrollbar for high-fidelity sliders */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: #252525;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C5A059;
+}
+
+/* Ambient glow and backdrop blurs */
+.gold-glow {
+  box-shadow: 0 0 20px rgba(197, 160, 89, 0.1);
+}
+
+.gold-glow-hover:hover {
+  box-shadow: 0 0 30px rgba(197, 160, 89, 0.15);
+  border-color: rgba(197, 160, 89, 0.4);
+}
+
+.gold-text-shimmer {
+  background: linear-gradient(135deg, #FFF 0%, #C5A059 50%, #B48E47 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
