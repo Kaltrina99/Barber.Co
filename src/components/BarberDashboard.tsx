@@ -10,12 +10,28 @@ import {
   UserPlus, Mail, Phone, Edit, Activity, Scissors, CheckCircle, ShieldAlert, Sparkles, LogOut, Check, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
+const PRESET_STYLIST_PHOTOS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1489980508314-941910ded1f4?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80'
+];
+
 interface BarberDashboardProps {
   barbers: Barber[];
   services: Service[];
   appointments: Appointment[];
   onUpdateBarber: (updatedBarber: Barber) => void;
   onAddBarber: (newBarber: Barber) => void;
+  onDeleteBarber?: (id: string) => void;
   onAddAppointment: (appointment: Appointment) => void;
   onUpdateAppointmentStatus: (id: string, status: 'pending' | 'booked' | 'completed' | 'cancelled') => void;
   onUpdateAppointment?: (appointment: Appointment) => void;
@@ -37,6 +53,7 @@ export default function BarberDashboard({
   appointments,
   onUpdateBarber,
   onAddBarber,
+  onDeleteBarber,
   onAddAppointment,
   onUpdateAppointmentStatus,
   onUpdateAppointment,
@@ -161,7 +178,7 @@ export default function BarberDashboard({
   const [notificationStatus, setNotificationStatus] = useState<{
     clientName: string;
     clientEmail: string;
-    type: 'reassigned' | 'cancelled' | 'booked';
+    type: 'reassigned' | 'cancelled' | 'booked' | 'completed';
     barberName: string;
     show: boolean;
   } | null>(null);
@@ -572,6 +589,21 @@ export default function BarberDashboard({
     });
   };
 
+  const handleSuperadminCompleteAppointment = (aptId: string) => {
+    const apt = appointments.find(a => a.id === aptId);
+    if (!apt) return;
+
+    onUpdateAppointmentStatus(aptId, 'completed');
+
+    setNotificationStatus({
+      clientName: apt.clientName,
+      clientEmail: apt.clientEmail || 'client@example.com',
+      type: 'completed',
+      barberName: apt.barberName,
+      show: true
+    });
+  };
+
   const handleDownloadICS = (apt: Appointment) => {
     // Format dates to ICS-friendly format (e.g., YYYYMMDDTHHMMSSZ)
     const dateClean = apt.date.replace(/-/g, '');
@@ -935,15 +967,86 @@ export default function BarberDashboard({
                       </select>
                     </div>
 
-                    <div className="sm:col-span-2 space-y-1.5">
-                      <label className="text-xs font-mono text-gray-400 block uppercase">Headshot Photo URL (Optional)</label>
-                      <input
-                        type="url"
-                        placeholder="https://images.unsplash.com/... or leave blank for dynamic photo"
-                        value={newBarberAvatar}
-                        onChange={(e) => setNewBarberAvatar(e.target.value)}
-                        className="w-full py-2.5 px-3 bg-black border border-white/10 focus:outline-none focus:border-amber-500 rounded-lg text-sm text-gray-200"
-                      />
+                    <div className="sm:col-span-2 space-y-3 bg-white/[0.01] border border-white/5 p-4 rounded-xl">
+                      <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                        <label className="text-xs font-mono text-gray-400 block uppercase font-bold text-amber-500">Staff portrait photo</label>
+                        <span className="text-[10px] font-mono text-gray-500">UPLOAD FILE OR SPECIFY URL</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-mono uppercase tracking-widest text-gray-500 block font-medium">OPTION A: Upload Image File</label>
+                          <div 
+                            className="border-2 border-dashed border-white/10 hover:border-amber-500/40 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white/[0.02] transition relative min-h-[76px]"
+                            onClick={() => document.getElementById('new-barber-file-input')?.click()}
+                          >
+                            <input 
+                              type="file" 
+                              id="new-barber-file-input" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  if (file.size > 3 * 1024 * 1024) {
+                                    alert("Max file size 3MB. Please select a smaller photo file.");
+                                    return;
+                                  }
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    if (typeof event.target?.result === 'string') {
+                                      setNewBarberAvatar(event.target.result);
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                            {newBarberAvatar && (newBarberAvatar.startsWith('data:') || !newBarberAvatar.includes('unsplash.com')) ? (
+                              <div className="space-y-2 flex flex-col items-center">
+                                <img src={newBarberAvatar} className="w-12 h-12 rounded-full object-cover border border-amber-500" />
+                                <span className="text-[10px] text-emerald-400 font-mono">✓ CUSTOM PHOTO LOADED</span>
+                              </div>
+                            ) : (
+                              <div className="space-y-1">
+                                <span className="text-xl block">📸</span>
+                                <span className="text-[10px] font-semibold text-gray-300">Click to import image</span>
+                                <span className="text-[8px] text-gray-500 block">JPEG, PNG up to 3MB</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-mono uppercase tracking-widest text-gray-500 block font-medium">OPTION B: Image Web URL</label>
+                          <textarea
+                            placeholder="https://images.unsplash.com/..."
+                            value={newBarberAvatar}
+                            onChange={(e) => setNewBarberAvatar(e.target.value)}
+                            className="w-full py-2 px-3 bg-black border border-white/10 focus:outline-none focus:border-amber-500 rounded-lg text-xs text-gray-200 font-mono h-[76px] resize-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-2 text-left space-y-1">
+                        <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">Or Choose Studio Presets:</span>
+                        <div className="flex flex-wrap gap-2 p-2 bg-black/40 border border-white/5 rounded-xl">
+                          {PRESET_STYLIST_PHOTOS.map((url, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setNewBarberAvatar(url)}
+                              className={`relative w-8 h-8 rounded-full overflow-hidden border-2 cursor-pointer transition duration-150 ${
+                                newBarberAvatar === url 
+                                  ? 'border-amber-500 scale-110 shadow-md shadow-amber-500/20' 
+                                  : 'border-transparent opacity-65 hover:opacity-100'
+                              }`}
+                            >
+                              <img src={url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="sm:col-span-2 space-y-1.5">
@@ -1137,36 +1240,62 @@ export default function BarberDashboard({
 
             {/* 3. SUB-TAB 1: PROFESSIONAL RESERVED SCHEDULES */}
             {(portalTab === 'schedule' || portalTab === 'super_schedule') && (
-              <div className="space-y-6" id="dashboard-schedule-panel">
-                
-                {/* Visual Bento Dashboard Statistics summary */}
+              <div className="space-y-6" id="dashboard-schedule-panel">                 {/* Visual Bento Dashboard Statistics summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="dashboard-bento-grid">
-                  <div className="bg-white/[0.01] border border-white/10 p-5 rounded-xl space-y-1 relative overflow-hidden gold-glow">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500 font-medium">Upcoming Shifts</span>
-                    <span className="block text-2xl font-serif font-bold text-white">{metrics.activeCount}</span>
-                    <span className="text-[10px] text-amber-500 block font-light">Pending Confirmations</span>
-                    <div className="absolute top-0 right-0 w-1.5 h-full bg-amber-500" />
+                  <div className="bg-black/40 border border-white/5 hover:border-amber-500/35 p-5 rounded-2xl relative overflow-hidden transition-all duration-300 group shadow-lg flex flex-col justify-between min-h-[120px]">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1.5 text-left">
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-gray-400 block font-semibold">Active Shifts</span>
+                        <span className="block text-3xl font-serif font-black text-white">{metrics.activeCount}</span>
+                      </div>
+                      <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500 border border-amber-500/20 group-hover:scale-110 transition duration-300">
+                        <Calendar className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-amber-400 block font-mono text-left">Pending Confirmation</span>
+                    <div className="absolute left-0 bottom-0 w-full h-1 bg-gradient-to-r from-amber-600/20 to-amber-500" />
                   </div>
 
-                  <div className="bg-white/[0.01] border border-white/10 p-5 rounded-xl space-y-1 relative overflow-hidden gold-glow">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500 font-medium">Completed Cuts</span>
-                    <span className="block text-2xl font-serif font-bold text-emerald-400">{metrics.completedCount}</span>
-                    <span className="text-[10px] text-gray-400 block font-light">Added to payout history</span>
-                    <div className="absolute top-0 right-0 w-1.5 h-full bg-emerald-500" />
+                  <div className="bg-black/40 border border-white/5 hover:border-emerald-500/35 p-5 rounded-2xl relative overflow-hidden transition-all duration-300 group shadow-lg flex flex-col justify-between min-h-[120px]">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1.5 text-left">
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-gray-400 block font-semibold">Completed Cuts</span>
+                        <span className="block text-3xl font-serif font-black text-emerald-400">{metrics.completedCount}</span>
+                      </div>
+                      <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition duration-300">
+                        <CheckCircle className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-gray-400 block font-mono text-left">Added to total payouts</span>
+                    <div className="absolute left-0 bottom-0 w-full h-1 bg-gradient-to-r from-emerald-600/20 to-emerald-500" />
                   </div>
 
-                  <div className="bg-white/[0.01] border border-white/10 p-5 rounded-xl space-y-1 relative overflow-hidden gold-glow">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500 font-medium">Service Revenue</span>
-                    <span className="block text-2xl font-serif font-bold text-amber-400">${metrics.estimatedIncome}</span>
-                    <span className="text-[10px] text-gray-400 block font-light">Incl. active reservations</span>
-                    <div className="absolute top-0 right-0 w-1.5 h-full bg-amber-400" />
+                  <div className="bg-black/40 border border-white/5 hover:border-amber-500/35 p-5 rounded-2xl relative overflow-hidden transition-all duration-300 group shadow-lg flex flex-col justify-between min-h-[120px]">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1.5 text-left">
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-gray-400 block font-semibold">Service Revenue</span>
+                        <span className="block text-3xl font-serif font-black text-amber-400">${metrics.estimatedIncome}</span>
+                      </div>
+                      <div className="p-2 bg-amber-500/10 rounded-lg text-[#C5A029] border border-amber-500/20 group-hover:scale-110 transition duration-300">
+                        <DollarSign className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-gray-400 block font-mono text-left">Incl. active sessions</span>
+                    <div className="absolute left-0 bottom-0 w-full h-1 bg-gradient-to-r from-amber-500/20 to-amber-600" />
                   </div>
 
-                  <div className="bg-white/[0.01] border border-white/10 p-5 rounded-xl space-y-1 relative overflow-hidden gold-glow">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500 font-medium">Cancellations</span>
-                    <span className="block text-2xl font-serif font-bold text-red-500">{metrics.cancelledCount}</span>
-                    <span className="text-[10px] text-gray-500 block font-light">0% double-book rate</span>
-                    <div className="absolute top-0 right-0 w-1.5 h-full bg-red-500/50" />
+                  <div className="bg-black/40 border border-white/5 hover:border-red-500/35 p-5 rounded-2xl relative overflow-hidden transition-all duration-300 group shadow-lg flex flex-col justify-between min-h-[120px]">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1.5 text-left">
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-gray-400 block font-semibold">Cancellations</span>
+                        <span className="block text-3xl font-serif font-black text-red-500">{metrics.cancelledCount}</span>
+                      </div>
+                      <div className="p-2 bg-red-500/10 rounded-lg text-red-400 border border-red-500/20 group-hover:scale-110 transition duration-300">
+                        <Activity className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-gray-500 block font-mono text-left">0% double-book rate</span>
+                    <div className="absolute left-0 bottom-0 w-full h-1 bg-gradient-to-r from-red-600/25 to-red-500" />
                   </div>
                 </div>
 
@@ -1242,6 +1371,8 @@ export default function BarberDashboard({
                             <span>Booking reassigned to Stylist <span className="text-white font-mono font-bold">{notificationStatus.barberName}</span></span>
                           ) : notificationStatus.type === 'cancelled' ? (
                             <span className="text-red-400">Booking Cancelled (No-fee cancellation applied)</span>
+                          ) : notificationStatus.type === 'completed' ? (
+                            <span className="text-emerald-400 font-bold">Grooming Session Completed & Registered on Ledger Archive</span>
                           ) : (
                             <span>Booking Confirmed / Approved</span>
                           )}
@@ -1435,7 +1566,11 @@ export default function BarberDashboard({
                                 type="button"
                                 onClick={() => {
                                   if (confirm('Mark this grooming session as Completed? This will add the fee to your total payouts.')) {
-                                    onUpdateAppointmentStatus(apt.id, 'completed');
+                                    if (activeBarberId === 'superadmin_hq') {
+                                      handleSuperadminCompleteAppointment(apt.id);
+                                    } else {
+                                      onUpdateAppointmentStatus(apt.id, 'completed');
+                                    }
                                   }
                                 }}
                                 className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-[10px] font-bold rounded cursor-pointer animate-fade-in"
@@ -1812,7 +1947,13 @@ export default function BarberDashboard({
                                             <>
                                               <button
                                                 type="button"
-                                                onClick={() => onUpdateAppointmentStatus(apt.id, 'completed')}
+                                                onClick={() => {
+                                                  if (activeBarberId === 'superadmin_hq') {
+                                                    handleSuperadminCompleteAppointment(apt.id);
+                                                  } else {
+                                                    onUpdateAppointmentStatus(apt.id, 'completed');
+                                                  }
+                                                }}
                                                 className="px-2 py-1 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-[9px] font-bold rounded uppercase cursor-pointer"
                                               >
                                                 COMPLETE
@@ -1949,7 +2090,11 @@ export default function BarberDashboard({
                           <button
                             type="button"
                             onClick={() => {
-                              onUpdateAppointmentStatus(apt.id, 'completed');
+                              if (activeBarberId === 'superadmin_hq') {
+                                handleSuperadminCompleteAppointment(apt.id);
+                              } else {
+                                onUpdateAppointmentStatus(apt.id, 'completed');
+                              }
                               setSelectedAptIdInCalendar(null);
                             }}
                             className="flex-1 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded text-[10px] tracking-wider uppercase font-mono cursor-pointer animate-fade-in"
@@ -2021,14 +2166,86 @@ export default function BarberDashboard({
                       />
                     </div>
 
-                    <div className="md:col-span-2 space-y-1.5 text-left">
-                      <label className="text-xs font-mono text-gray-400 uppercase tracking-widest block font-medium">Headshot Photo URL</label>
-                      <input
-                        type="url"
-                        value={editAvatar}
-                        onChange={(e) => setEditAvatar(e.target.value)}
-                        className="w-full py-2.5 px-3 bg-black border border-white/10 rounded-lg text-sm text-gray-255 focus:outline-[#f59e0b] focus:border-amber-500 transition-all font-sans"
-                      />
+                    <div className="md:col-span-2 space-y-3 bg-white/[0.01] border border-white/5 p-4 rounded-xl text-left">
+                      <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                        <label className="text-xs font-mono text-gray-400 block uppercase font-bold text-amber-500">Staff portrait photo</label>
+                        <span className="text-[10px] font-mono text-gray-500">UPLOAD FILE OR SPECIFY URL</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-mono uppercase tracking-widest text-gray-500 block font-medium">OPTION A: Upload Image File</label>
+                          <div 
+                            className="border-2 border-dashed border-white/10 hover:border-amber-500/40 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white/[0.02] transition relative min-h-[76px]"
+                            onClick={() => document.getElementById('edit-barber-file-input')?.click()}
+                          >
+                            <input 
+                              type="file" 
+                              id="edit-barber-file-input" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  if (file.size > 3 * 1024 * 1024) {
+                                    alert("Max file size 3MB. Please select a smaller photo file.");
+                                    return;
+                                  }
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    if (typeof event.target?.result === 'string') {
+                                      setEditAvatar(event.target.result);
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                            {editAvatar && (editAvatar.startsWith('data:') || !editAvatar.includes('unsplash.com')) ? (
+                              <div className="space-y-2 flex flex-col items-center">
+                                <img src={editAvatar} className="w-12 h-12 rounded-full object-cover border border-amber-500" />
+                                <span className="text-[10px] text-emerald-400 font-mono">✓ CUSTOM PHOTO LOADED</span>
+                              </div>
+                            ) : (
+                              <div className="space-y-1">
+                                <span className="text-xl block">📸</span>
+                                <span className="text-[10px] font-semibold text-gray-300">Click to import image</span>
+                                <span className="text-[8px] text-gray-500 block">JPEG, PNG up to 3MB</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-mono uppercase tracking-widest text-gray-500 block font-medium">OPTION B: Image Web URL</label>
+                          <textarea
+                            placeholder="https://images.unsplash.com/..."
+                            value={editAvatar}
+                            onChange={(e) => setEditAvatar(e.target.value)}
+                            className="w-full py-2 px-3 bg-black border border-white/10 focus:outline-none focus:border-amber-500 rounded-lg text-xs text-gray-200 font-mono h-[76px] resize-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-2 text-left space-y-1">
+                        <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">Or Choose Studio Presets:</span>
+                        <div className="flex flex-wrap gap-2 p-2 bg-black/40 border border-white/5 rounded-xl">
+                          {PRESET_STYLIST_PHOTOS.map((url, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setEditAvatar(url)}
+                              className={`relative w-8 h-8 rounded-full overflow-hidden border-2 cursor-pointer transition duration-150 ${
+                                editAvatar === url 
+                                  ? 'border-amber-500 scale-110 shadow-md shadow-amber-500/20' 
+                                  : 'border-transparent opacity-65 hover:opacity-100'
+                              }`}
+                            >
+                              <img src={url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="md:col-span-2 space-y-1.5 text-left">
@@ -2432,7 +2649,7 @@ export default function BarberDashboard({
                           </div>
                         </div>
 
-                        <div className="flex justify-end pt-2">
+                        <div className="flex gap-2 justify-end pt-2">
                           <button
                             onClick={() => {
                               setActiveBarberId(barber.id);
@@ -2440,8 +2657,22 @@ export default function BarberDashboard({
                             }}
                             className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-black font-semibold rounded-lg text-[10px] font-mono tracking-wider transition uppercase flex items-center gap-1 cursor-pointer"
                           >
-                            <Edit className="w-3.5 h-3.5" /> Re-Configure Profile
+                            <Edit className="w-3.5 h-3.5" /> Profile
                           </button>
+                          
+                          {barbers.length > 1 && onDeleteBarber && (
+                            <button
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to dismiss ${barber.name} from the active team roster?`)) {
+                                  onDeleteBarber(barber.id);
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white font-semibold rounded-lg text-[10px] font-mono tracking-wider transition uppercase flex items-center gap-1 cursor-pointer"
+                              title="Dismiss Barber"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Dismiss
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

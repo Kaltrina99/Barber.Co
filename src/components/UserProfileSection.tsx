@@ -8,8 +8,23 @@ import { UserProfile, Appointment, Barber } from '../types';
 import { 
   User, Mail, Phone, Lock, Eye, EyeOff, Save, LogOut, 
   Clock, Scissors, History, CheckCircle2, XCircle, AlertCircle, 
-  Calendar, Check, UserPlus, LogIn, Sliders, ShieldCheck
+  Calendar, Check, UserPlus, LogIn, Sliders, ShieldCheck, Image
 } from 'lucide-react';
+
+const PRESET_USER_AVATARS = [
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80',
+  'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=150&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
+  'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=150&q=80',
+  'https://images.unsplash.com/photo-1548142813-c348350df52b?auto=format&fit=crop&w=150&q=80',
+  'https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=150&q=80',
+  'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80'
+];
 
 interface UserProfileSectionProps {
   currentUser: UserProfile | null;
@@ -79,6 +94,7 @@ export default function UserProfileSection({
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [avatar, setAvatar] = useState(PRESET_USER_AVATARS[0]);
   const [showPassword, setShowPassword] = useState(false);
   
   // Notice Banner states
@@ -87,6 +103,7 @@ export default function UserProfileSection({
   // Profile Editable Fields state (when logged in)
   const [editName, setEditName] = useState(currentUser?.name || '');
   const [editPhone, setEditPhone] = useState(currentUser?.phone || '');
+  const [editAvatar, setEditAvatar] = useState(currentUser?.avatar || PRESET_USER_AVATARS[0]);
   const [editPreferredBarber, setEditPreferredBarber] = useState(currentUser?.preferredBarberId || '');
   const [editStylePrefs, setEditStylePrefs] = useState(currentUser?.stylePreferences || '');
   const [editNotifyType, setEditNotifyType] = useState<'email' | 'sms' | 'none'>(currentUser?.notificationType || 'email');
@@ -97,6 +114,7 @@ export default function UserProfileSection({
     if (currentUser) {
       setEditName(currentUser.name);
       setEditPhone(currentUser.phone);
+      setEditAvatar(currentUser.avatar || PRESET_USER_AVATARS[0]);
       setEditPreferredBarber(currentUser.preferredBarberId || '');
       setEditStylePrefs(currentUser.stylePreferences || '');
       setEditNotifyType(currentUser.notificationType || 'email');
@@ -182,6 +200,7 @@ export default function UserProfileSection({
       password,
       name,
       phone,
+      avatar: avatar || undefined,
       notificationType: 'email',
       createdAt: new Date().toISOString()
     };
@@ -215,6 +234,7 @@ export default function UserProfileSection({
       ...currentUser,
       name: editName,
       phone: editPhone,
+      avatar: editAvatar || undefined,
       preferredBarberId: editPreferredBarber || undefined,
       stylePreferences: editStylePrefs || undefined,
       notificationType: editNotifyType
@@ -463,6 +483,34 @@ export default function UserProfileSection({
                         />
                       </div>
                     </div>
+
+                    {/* Portrait Photo Preset Grid */}
+                    <div className="space-y-2 text-left">
+                      <label className="text-[10px] font-mono uppercase tracking-widest text-gray-400 block font-medium">Select Portrait Photo</label>
+                      <div className="flex flex-wrap gap-2.5 p-2 bg-black/40 border border-white/5 rounded-xl">
+                        {PRESET_USER_AVATARS.slice(0, 6).map((url, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setAvatar(url)}
+                            className={`relative w-9 h-9 rounded-full overflow-hidden border-2 cursor-pointer transition duration-150 ${
+                              avatar === url 
+                                ? 'border-amber-500 scale-105 shadow-md shadow-amber-500/20' 
+                                : 'border-transparent opacity-65 hover:opacity-100 hover:scale-105'
+                            }`}
+                          >
+                            <img src={url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          </button>
+                        ))}
+                      </div>
+                      <input
+                        type="url"
+                        placeholder="Or custom photo URL: https://..."
+                        value={avatar}
+                        onChange={(e) => setAvatar(e.target.value)}
+                        className="w-full py-2 px-3 bg-black border border-white/10 rounded-lg text-xs text-gray-400 focus:outline-none focus:border-amber-500 transition-all font-mono"
+                      />
+                    </div>
                   </>
                 )}
 
@@ -571,11 +619,20 @@ export default function UserProfileSection({
           <div className="space-y-8 animate-fade-in" id="profile-dashboard-root">
             
             {/* Top Identity Segment */}
-            <div className="bg-white/[0.01] border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 gold-glow">
+            <div className="bg-white/[0.01] border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 gold-glow animate-fade-in">
               <div className="flex items-center gap-5 text-center sm:text-left flex-col sm:flex-row">
-                <div className="w-16 h-16 rounded-full bg-amber-500 text-black flex items-center justify-center border-2 border-amber-400 shadow-md">
-                  <User className="w-8 h-8 stroke-[1.8]" />
-                </div>
+                {currentUser.avatar ? (
+                  <img 
+                    src={currentUser.avatar}
+                    referrerPolicy="no-referrer"
+                    alt={currentUser.name}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-amber-400 shadow-md object-top"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-amber-500 text-black flex items-center justify-center border-2 border-amber-400 shadow-md">
+                    <User className="w-8 h-8 stroke-[1.8]" />
+                  </div>
+                )}
                 <div>
                   <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
                     <h2 className="font-serif text-2xl font-black text-white">{currentUser.name}</h2>
@@ -639,6 +696,34 @@ export default function UserProfileSection({
                         value={editPhone}
                         onChange={(e) => setEditPhone(e.target.value)}
                         className="w-full py-2 px-3 bg-black border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-amber-500 transition-all font-mono"
+                      />
+                    </div>
+
+                    {/* Customer Profile Portrait Preset Grid */}
+                    <div className="space-y-2 text-left">
+                      <label className="text-[10px] font-mono uppercase tracking-widest text-gray-400 block font-medium">Profile Image</label>
+                      <div className="flex flex-wrap gap-2 p-2 bg-black/40 border border-white/5 rounded-xl">
+                        {PRESET_USER_AVATARS.map((url, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setEditAvatar(url)}
+                            className={`relative w-8 h-8 rounded-full overflow-hidden border-2 cursor-pointer transition duration-150 ${
+                              editAvatar === url 
+                                ? 'border-amber-500 scale-110 shadow-md shadow-amber-500/20' 
+                                : 'border-transparent opacity-65 hover:opacity-100 hover:scale-110'
+                            }`}
+                          >
+                            <img src={url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          </button>
+                        ))}
+                      </div>
+                      <input
+                        type="url"
+                        placeholder="Custom design image: https://..."
+                        value={editAvatar}
+                        onChange={(e) => setEditAvatar(e.target.value)}
+                        className="w-full py-1.5 px-3 bg-black border border-white/10 rounded-lg text-xs text-gray-400 focus:outline-none focus:border-amber-500 transition-all font-mono"
                       />
                     </div>
 

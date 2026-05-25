@@ -4,16 +4,24 @@
  */
 
 import React from 'react';
-import { Scissors, Calendar, UserCheck, Settings } from 'lucide-react';
+import { Scissors, Calendar, UserCheck, Settings, Sun, Moon } from 'lucide-react';
 import { UserProfile } from '../types';
 
 interface HeaderProps {
   activeTab: 'booking' | 'profile' | 'barber';
   onTabChange: (tab: 'booking' | 'profile' | 'barber') => void;
   currentUser?: UserProfile | null;
+  themeMode?: 'light' | 'dark';
+  onToggleThemeMode?: () => void;
 }
 
-export default function Header({ activeTab, onTabChange, currentUser = null }: HeaderProps) {
+export default function Header({ 
+  activeTab, 
+  onTabChange, 
+  currentUser = null, 
+  themeMode = 'dark', 
+  onToggleThemeMode 
+}: HeaderProps) {
   const isUserAdmin = !!(
     currentUser &&
     currentUser.email &&
@@ -70,7 +78,16 @@ export default function Header({ activeTab, onTabChange, currentUser = null }: H
                 : 'text-gray-400 hover:text-white hover:bg-white/[0.04] border border-transparent'
             }`}
           >
-            <UserCheck className="w-4 h-4 text-amber-500" />
+            {currentUser && currentUser.avatar ? (
+              <img 
+                src={currentUser.avatar} 
+                referrerPolicy="no-referrer"
+                alt={currentUser.name} 
+                className="w-4 h-4 rounded-full object-cover border border-amber-500/40 object-top" 
+              />
+            ) : (
+              <UserCheck className="w-4 h-4 text-amber-500" />
+            )}
             <span>{currentUser ? `${currentUser.name.split(' ')[0]}'s Account` : 'Guest Registry'}</span>
           </button>
  
@@ -86,6 +103,22 @@ export default function Header({ activeTab, onTabChange, currentUser = null }: H
             >
               <Settings className="w-4 h-4" />
               <span>Barbers Portal</span>
+            </button>
+          )}
+
+          {/* Theme Mode Toggle Switch */}
+          {onToggleThemeMode && (
+            <button
+              id="theme-mode-toggle"
+              onClick={onToggleThemeMode}
+              className="p-2 sm:p-2.5 rounded-lg text-gray-400 hover:text-amber-500 hover:bg-white/[0.04] border border-transparent transition duration-200 cursor-pointer flex items-center justify-center bg-white/[0.02]"
+              title={themeMode === 'light' ? 'Activate Dark Mode' : 'Activate Light Mode'}
+            >
+              {themeMode === 'light' ? (
+                <Moon className="w-4 h-4 text-slate-700 hover:text-amber-600" />
+              ) : (
+                <Sun className="w-4 h-4 text-amber-500" />
+              )}
             </button>
           )}
         </nav>

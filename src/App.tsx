@@ -9,6 +9,7 @@ import HeroSection from './components/HeroSection';
 import ClientBookingFlow from './components/ClientBookingFlow';
 import UserProfileSection from './components/UserProfileSection';
 import BarberDashboard from './components/BarberDashboard';
+import { motion } from 'motion/react';
 import { Barber, Service, Appointment, UserProfile } from './types';
 import { 
   getStoredBarbers, saveStoredBarbers, 
@@ -34,6 +35,32 @@ export default function App() {
   // User Session & Directory Management
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(getLoggedInUser());
   const [users, setUsers] = useState<UserProfile[]>(getStoredUsers());
+
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('theme_mode') as 'light' | 'dark') || 'dark';
+    }
+    return 'dark';
+  });
+
+  const toggleThemeMode = () => {
+    const newMode = themeMode === 'dark' ? 'light' : 'dark';
+    setThemeMode(newMode);
+    localStorage.setItem('theme_mode', newMode);
+  };
+
+  useEffect(() => {
+    if (themeMode === 'light') {
+      document.body.classList.add('is-light');
+      document.body.style.backgroundColor = '#f4f6f8';
+      document.body.style.color = '#1f2937';
+    } else {
+      document.body.classList.remove('is-light');
+      document.body.style.backgroundColor = '';
+      document.body.style.color = '';
+    }
+  }, [themeMode]);
+
   const [theme, setTheme] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('barber_theme') || 'gold';
@@ -167,6 +194,14 @@ export default function App() {
     setBarbers(prev => [...prev, newBarber]);
   };
 
+  const handleDeleteBarber = (barberId: string) => {
+    setBarbers(prev => {
+      const updated = prev.filter(b => b.id !== barberId);
+      saveStoredBarbers(updated);
+      return updated;
+    });
+  };
+
   // Safe smooth navigation scroll
   const handleScrollToBooking = () => {
     const el = document.getElementById('booking-portal-root');
@@ -176,10 +211,18 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#e0e0e0] flex flex-col font-sans selection:bg-amber-500 selection:text-black">
+    <div className={`min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-black transition-colors duration-300 ${
+      themeMode === 'light' ? 'bg-[#f4f6f8] text-[#1f2937]' : 'bg-[#050505] text-[#e0e0e0]'
+    }`}>
       
       {/* Prime Header navigation */}
-      <Header activeTab={activeTab} onTabChange={setActiveTab} currentUser={currentUser} />
+      <Header 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+        currentUser={currentUser} 
+        themeMode={themeMode}
+        onToggleThemeMode={toggleThemeMode}
+      />
 
       <main className="flex-grow">
         {activeTab === 'booking' && (
@@ -188,7 +231,14 @@ export default function App() {
             <HeroSection onBookNowClick={handleScrollToBooking} />
 
             {/* 2. Value Propositions Segment */}
-            <section className="py-16 bg-[#0a0a0a] border-y border-white/5" id="shop-philosophy">
+            <motion.section 
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.6 }}
+              className="py-16 bg-[#0a0a0a] border-y border-white/5" 
+              id="shop-philosophy"
+            >
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center sm:text-left font-sans">
                   <div className="p-6 bg-white/[0.02] border border-white/5 rounded-xl space-y-3 gold-glow-hover transition-all duration-300">
@@ -222,10 +272,17 @@ export default function App() {
                   </div>
                 </div>
               </div>
-            </section>
+            </motion.section>
 
             {/* 3. Team Profiles Showroom */}
-            <section className="py-20 bg-gradient-to-b from-[#0a0a0a] to-[#050505]" id="barbers-showcase">
+            <motion.section 
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="py-20 bg-gradient-to-b from-[#0a0a0a] to-[#050505]" 
+              id="barbers-showcase"
+            >
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 <div className="text-center space-y-3 mb-12">
@@ -284,10 +341,17 @@ export default function App() {
                   ))}
                 </div>
               </div>
-            </section>
+            </motion.section>
 
             {/* 4. Luxury Price Menu & Tariff Cards */}
-            <section className="py-20 bg-[#050505] border-t border-white/5" id="services-section">
+            <motion.section 
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.6 }}
+              className="py-20 bg-[#050505] border-t border-white/5" 
+              id="services-section"
+            >
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 <div className="text-center space-y-3 mb-12">
@@ -382,10 +446,17 @@ export default function App() {
                   })}
                 </div>
               </div>
-            </section>
+            </motion.section>
  
              {/* 5. Client Testimonials Slider */}
-             <section className="py-16 bg-gradient-to-b from-[#050505] to-[#0a0a0a] border-t border-white/5" id="reviews-slider">
+             <motion.section 
+               initial={{ opacity: 0, y: 35 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               viewport={{ once: true, margin: "-80px" }}
+               transition={{ duration: 0.6 }}
+               className="py-16 bg-gradient-to-b from-[#050505] to-[#0a0a0a] border-t border-white/5" 
+               id="reviews-slider"
+             >
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                  
                  <div className="text-center space-y-2 mb-10">
@@ -415,17 +486,24 @@ export default function App() {
                    ))}
                  </div>
                </div>
-             </section>
+             </motion.section>
  
              {/* 6. Active Custom Scheduling Portal Wizard */}
-             <ClientBookingFlow 
-               barbers={barbers} 
-               services={services} 
-               appointments={appointments} 
-               onAddAppointment={handleAddAppointment} 
-               onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
-               currentUser={currentUser}
-             />
+             <motion.div
+               initial={{ opacity: 0, y: 35 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               viewport={{ once: true, margin: "-80px" }}
+               transition={{ duration: 0.7 }}
+             >
+               <ClientBookingFlow 
+                 barbers={barbers} 
+                 services={services} 
+                 appointments={appointments} 
+                 onAddAppointment={handleAddAppointment} 
+                 onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
+                 currentUser={currentUser}
+               />
+             </motion.div>
            </div>
          )}
  
@@ -450,6 +528,7 @@ export default function App() {
             appointments={appointments}
             onUpdateBarber={handleUpdateBarber}
             onAddBarber={handleAddBarber}
+            onDeleteBarber={handleDeleteBarber}
             onAddAppointment={handleAddAppointment}
             onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
             onUpdateAppointment={handleUpdateAppointment}
@@ -621,6 +700,91 @@ export default function App() {
           background: linear-gradient(135deg, #FFF 0%, var(--color-amber-500) 50%, var(--color-amber-600) 100%) !important;
           -webkit-background-clip: text !important;
           -webkit-text-fill-color: transparent !important;
+        }
+
+        /* High-end Premium Light Mode overrides */
+        body.is-light {
+          background-color: #f3f4f6 !important;
+          color: #1f2937 !important;
+        }
+        body.is-light .min-h-screen {
+          background-color: #f3f4f6 !important;
+          color: #1f2937 !important;
+        }
+        body.is-light .bg-gradient-to-b {
+          background: #f3f4f6 !important;
+        }
+        body.is-light .bg-\\[\\#050505\\], body.is-light .bg-\\[\\#050505\\]\\/95 {
+          background-color: #f3f4f6 !important;
+          color: #1f2937 !important;
+        }
+        body.is-light .bg-\\[\\#0a0a0a\\], body.is-light .bg-\\[\\#0b0b0b\\], body.is-light .bg-white\\/\\[0\\.01\\], body.is-light .bg-white\\/\\[0\\.02\\], body.is-light .bg-white\\/\\[0\\.03\\] {
+          background-color: #ffffff !important;
+          border-color: rgba(0, 0, 0, 0.08) !important;
+          color: #1f2937 !important;
+        }
+        body.is-light header {
+          background-color: rgba(255, 255, 255, 0.92) !important;
+          border-color: rgba(0, 0, 0, 0.08) !important;
+          color: #111827 !important;
+        }
+        body.is-light .text-\\[\\#e0e0e0\\], body.is-light .text-\\[\\#f5f5f5\\], body.is-light header span {
+          color: #111827 !important;
+        }
+        body.is-light .text-white {
+          color: #111827 !important;
+        }
+        body.is-light .text-gray-400, body.is-light .text-gray-450 {
+          color: #4b5563 !important;
+        }
+        body.is-light .text-gray-305, body.is-light .text-gray-300 {
+          color: #1f2937 !important;
+        }
+        body.is-light .border-white\/5, body.is-light .border-white\/10, body.is-light .border-white\/20, body.is-light .border-white\/35 {
+          border-color: rgba(0, 0, 0, 0.1) !important;
+        }
+        body.is-light input, body.is-light select, body.is-light textarea {
+          background-color: #ffffff !important;
+          color: #111827 !important;
+          border-color: rgba(0, 0, 0, 0.16) !important;
+        }
+        body.is-light input:focus, body.is-light select:focus, body.is-light textarea:focus {
+          border-color: var(--color-amber-500) !important;
+        }
+        body.is-light .bg-black, body.is-light .bg-black\/45, body.is-light .bg-black\/40 {
+          background-color: #e5e7eb !important;
+          border-color: rgba(0, 0, 0, 0.1) !important;
+          color: #111827 !important;
+        }
+        body.is-light .bg-amber-500\/10 {
+          background-color: rgba(197, 160, 89, 0.12) !important;
+        }
+        body.is-light .bg-white\/5, body.is-light .bg-white\/10 {
+          background-color: rgba(0, 0, 0, 0.05) !important;
+        }
+        body.is-light .gold-text-shimmer {
+          background: linear-gradient(135deg, #1f2937 0%, var(--color-amber-600) 100%) !important;
+          -webkit-background-clip: text !important;
+          -webkit-text-fill-color: transparent !important;
+        }
+        body.is-light footer {
+          background-color: #ffffff !important;
+          border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+        }
+        body.is-light footer p {
+          color: #4b5563 !important;
+        }
+        body.is-light footer a {
+          color: #6b7280 !important;
+        }
+        body.is-light footer a:hover {
+          color: var(--color-amber-500) !important;
+        }
+        body.is-light .shadow-2xl, body.is-light .gold-glow {
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02) !important;
+        }
+        body.is-light .gold-glow-hover:hover {
+          box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.08) !important;
         }
       `}</style>
 
